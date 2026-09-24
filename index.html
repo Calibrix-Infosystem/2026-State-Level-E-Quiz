@@ -211,30 +211,33 @@
     <script>
         /* 
            ========================================================================
-           MANUAL CONFIGURATION AREA (GITHUB / INDEX.HTML वरून थेट बदल करण्यासाठी)
+           ALL CONFIGURATIONS IN ONE PLACE (सर्व सेटिंग्ज एकाच जागी)
+           ========================================================================
+           FORMAT GUIDELINE FOR TIME:
+           Format: "YYYY-MM-DD hh:mm AM/PM" (उदा. "2026-09-25 10:00 AM")
            ========================================================================
         */
         const CONFIG = {
-            // १. कॉलेज आणि क्विझ नाव
+            // १. कॉलेज आणि परीक्षा नाव
             collegeName: "G.E.S. COLLEGE OF PHARMACY (D.PHARM)",
             collegeSubtitle: "Limb, Satara - Approved by PCI & DTE Maharashtra",
             quizTitle: "STATE LEVEL E-QUIZ COMPETITION",
             logoUrl: "logo.ico",
 
-            // २. इथं तुमचा Google Form URL पेस्ट करा (embedded=true ठेवा)
-            formUrl: "https://docs.google.com/forms/d/e/1FAIpQLSd4VzPn7ayt6-973D4C5ibLXIwtHMRVMCao-lgw5kOtJsYQ0w/viewform?embedded=true" width="640" height="7610" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>",
+            // २. अपडेट केलेली तुमची Google Form Link
+            formUrl: "https://docs.google.com/forms/d/e/1FAIpQLSd4VzPn7ayt6-973D4C5ibLXIwtHMRVMCao-lgw5kOtJsYQ0w/viewform?embedded=true",
 
             // ३. परीक्षा कालावधी (मिनिटांमध्ये)
-            durationMinutes: 30,
+            durationMinutes: 15,
 
-            // ४. linkStatus: true म्हणजे परीक्षा चालू, false म्हणजे बंद/Lock
+            // ४. परीक्षा ऑन/ऑफ बटण (true = परीक्षा चालू ठेवा, false = परीक्षा बंद ठेवा)
             linkStatus: true,
 
-            // ५. परीक्षेची सुरुवातीची वेळ आणि तारीख (Format: YYYY-MM-DDTHH:MM)
-            startTime: "2026-09-24T16:00", 
+            // ५. परीक्षा सुरू होण्याची वेळ (IST - 12 Hour Clock Format)
+            startTime: "2026-09-25 10:00 AM", 
 
-            // ६. परीक्षेची शेवटची वेळ आणि तारीख (Format: YYYY-MM-DDTHH:MM)
-            endTime: "2026-09-24T16:30"
+            // ६. परीक्षा संपण्याची वेळ (IST - 12 Hour Clock Format)
+            endTime: "2026-09-25 06:00 PM"
         };
 
         /* ======================================================================== */
@@ -248,6 +251,31 @@
         let pauseTimerInterval = null;
         let pauseTimeRemaining = 60;
         let isIframeHovered = false;
+
+        // 12-Hour IST String ला timestamp मध्ये Convert करणारा Fast Parser
+        function parseIST12HourTime(timeStr) {
+            try {
+                const parts = timeStr.trim().split(' ');
+                const dateParts = parts[0].split('-');
+                const timeParts = parts[1].split(':');
+                const ampm = parts[2].toUpperCase();
+
+                let year = parseInt(dateParts[0], 10);
+                let month = parseInt(dateParts[1], 10) - 1;
+                let day = parseInt(dateParts[2], 10);
+
+                let hours = parseInt(timeParts[0], 10);
+                let minutes = parseInt(timeParts[1], 10);
+
+                if (ampm === 'PM' && hours < 12) hours += 12;
+                if (ampm === 'AM' && hours === 12) hours = 0;
+
+                return new Date(year, month, day, hours, minutes, 0).getTime();
+            } catch (e) {
+                console.error("Invalid Date Format in CONFIG!", e);
+                return Date.now();
+            }
+        }
 
         window.addEventListener('load', () => {
             updateUIBranding();
@@ -275,8 +303,8 @@
             const cardStart = document.getElementById('cardStartTest');
 
             const nowTime = Date.now();
-            const startTime = new Date(CONFIG.startTime).getTime();
-            const endTime = new Date(CONFIG.endTime).getTime();
+            const startTime = parseIST12HourTime(CONFIG.startTime);
+            const endTime = parseIST12HourTime(CONFIG.endTime);
 
             // Condition 1: Master Link Status OFF or Exam Window Expired
             if (!CONFIG.linkStatus || nowTime >= endTime) {
@@ -309,7 +337,7 @@
                 document.getElementById('cntHours').innerText = String(h).padStart(2, '0');
                 document.getElementById('cntMins').innerText = String(m).padStart(2, '0');
                 document.getElementById('cntSecs').innerText = String(s).padStart(2, '0');
-                document.getElementById('scheduleStartText').innerText = new Date(CONFIG.startTime).toLocaleString();
+                document.getElementById('scheduleStartText').innerText = CONFIG.startTime + " (IST)";
                 return;
             }
 
